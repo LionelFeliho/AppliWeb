@@ -73,7 +73,7 @@ def test_calibration_and_basket_curve_endpoints(tmp_path: Path) -> None:
         assert calibration.status_code == 200, calibration.text
         payload = calibration.json()
         assert len(payload["tenor_fits"]) == 5
-        assert payload["observations_used"] == 135
+        assert payload["observations_used"] == 60
         assert payload["tenor_fits"][2]["diagnostics"]["log_r_squared"] > 0.99
 
         curve = client.post(
