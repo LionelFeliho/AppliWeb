@@ -1,0 +1,29 @@
+# Human-readable provider inventory. The current ECB defaults live in
+# app/market_data/providers.py; this file is the contract for the next config loader.
+providers:
+  ecb:
+    type: ecb_sdmx
+    base_url: https://data-api.ecb.europa.eu/service
+    lookback_days: 7
+    max_staleness_days: 7
+    series:
+      - flow: EXR
+        key: D.USD.EUR.SP00.A
+        canonical_id: FX.EURUSD.SPOT
+        asset_class: FX
+        quote_type: SPOT
+        currency: USD
+        unit: USD_PER_EUR
+        conversion: identity
+      - flow: EST
+        key: B.EU000A2X2A25.WT
+        canonical_id: RATE.EUR.ESTR.ON
+        asset_class: RATES
+        quote_type: RATE
+        currency: EUR
+        unit: DECIMAL
+        conversion: percent_to_decimal
+
+  exchange_settlements:
+    type: csv
+    path_template: /market-data/{valuation_date}/settlements.csv
