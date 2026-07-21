@@ -24,13 +24,8 @@
       "label": "XVA: Backend tests",
       "type": "shell",
       "command": "python -m pytest -q",
-      "options": {
-        "cwd": "${workspaceFolder}/apps/api"
-      },
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "options": { "cwd": "${workspaceFolder}/apps/api" },
+      "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     },
     {
@@ -39,9 +34,18 @@
       "command": "python ../../scripts/run_eod.py --date ${input:asOfDate} --skip-ecb --settlement-file ../../sample_data/settlements.csv",
       "options": {
         "cwd": "${workspaceFolder}/apps/api",
-        "env": {
-          "XVA_DATABASE_URL": "postgresql+psycopg://xva:xva@localhost:5432/xva"
-        }
+        "env": { "XVA_DATABASE_URL": "postgresql+psycopg://xva:xva@localhost:5432/xva" }
+      },
+      "dependsOn": "XVA: Start database",
+      "problemMatcher": []
+    },
+    {
+      "label": "XVA: Import synthetic G10 XCCY demo",
+      "type": "shell",
+      "command": "python -m app.market_data.cli ingest-csv --date ${input:asOfDate} --file ../../sample_data/g10_xccy_demo.csv",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api",
+        "env": { "XVA_DATABASE_URL": "postgresql+psycopg://xva:xva@localhost:5432/xva" }
       },
       "dependsOn": "XVA: Start database",
       "problemMatcher": []
