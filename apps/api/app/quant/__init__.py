@@ -1,1 +1,1 @@
-"""Quantitative conventions, curves, XCCY pricing and exposure analytics."""
+"""Quantitative conventions, curves, XCCY, credit proxy and exposure analytics."""
