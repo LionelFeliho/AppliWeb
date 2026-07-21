@@ -1,0 +1,49 @@
+# Canonical EOD market-data requirements for the G10 XCCY vertical slice.
+# Vendor tickers belong in provider-specific adapters or settlement files.
+valuation_cut: EOD
+currencies:
+  - USD
+  - EUR
+  - GBP
+  - JPY
+  - CHF
+  - CAD
+  - AUD
+  - NZD
+  - NOK
+  - SEK
+
+curves:
+  family: OIS
+  quote_type: RATE
+  required_tenors: [1M, 3M, 6M, 1Y, 2Y, 5Y, 10Y]
+  canonical_id_template: "RATE.<CCY>.OIS.<TENOR>"
+  strict_completeness: true
+  interpolation: log_linear_discount_factor
+
+fx:
+  orientation: quote_currency_per_base_currency
+  canonical_id_template: "FX.<BASE><QUOTE>.SPOT"
+  usd_pillars:
+    - FX.EURUSD.SPOT
+    - FX.GBPUSD.SPOT
+    - FX.AUDUSD.SPOT
+    - FX.NZDUSD.SPOT
+    - FX.USDJPY.SPOT
+    - FX.USDCHF.SPOT
+    - FX.USDCAD.SPOT
+    - FX.USDNOK.SPOT
+    - FX.USDSEK.SPOT
+  allow_inverse: true
+  allow_usd_cross: true
+
+optional_risk_inputs:
+  fx_volatility_template: "VOL.FX.<PAIR>.ATM.<TENOR>"
+  counterparty_spread_template: "CR.<COUNTERPARTY>.5Y"
+  own_spread_template: "CR.<LEGAL_ENTITY>.5Y"
+
+source_priority:
+  - approved_vendor_close
+  - exchange_settlement
+  - official_administrator
+  - controlled_manual_override
