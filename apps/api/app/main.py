@@ -17,6 +17,7 @@ from .market_data.domain import (
 )
 from .market_data.routes import router as market_data_router
 from .pricing import router as pricing_router
+from .xccy_routes import market_router as g10_market_router, pricing_router as xccy_pricing_router, reference_router
 
 
 def create_app(
@@ -51,8 +52,8 @@ def create_app(
         title="XVA EOD Pricing API",
         version=__version__,
         description=(
-            "Auditable end-of-day market-data snapshots and the first pricing vertical slice "
-            "for a future multi-asset/XVA platform."
+            "Auditable end-of-day market-data snapshots, G10 cross-currency pricing, "
+            "exposure profiles and first-principles XVA diagnostics."
         ),
         lifespan=lifespan,
     )
@@ -89,6 +90,9 @@ def create_app(
 
     app.include_router(market_data_router)
     app.include_router(pricing_router)
+    app.include_router(xccy_pricing_router)
+    app.include_router(reference_router)
+    app.include_router(g10_market_router)
     return app
 
 
