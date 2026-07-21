@@ -9,7 +9,7 @@
 <body>
   <header class="topbar">
     <div>
-      <p class="eyebrow">MARKET DATA · PRICING · XVA</p>
+      <p class="eyebrow">MARKET DATA · XCCY PRICING · EXPOSURE · XVA</p>
       <h1>EOD Control Room</h1>
     </div>
     <nav>
@@ -22,8 +22,8 @@
     <section class="hero panel">
       <div>
         <p class="eyebrow">HISTORICAL SNAPSHOT</p>
-        <h2>Une as-of date, une provenance explicite, un calcul reproductible.</h2>
-        <p class="muted">Chaque journée EOD est conservée en base. Le mode exact interdit tout fallback ; le mode previous ready utilise le dernier snapshot antérieur sans jamais regarder dans le futur.</p>
+        <h2>Une as-of date, des closes auditables, un calcul reproductible.</h2>
+        <p class="muted">Chaque journée EOD est conservée. Le mode exact interdit tout fallback ; previous ready utilise uniquement le dernier snapshot antérieur.</p>
       </div>
       <div class="controls">
         <label>As-of date
@@ -43,7 +43,7 @@
       </div>
     </section>
 
-    <section class="metric-grid">
+    <section class="metric-grid snapshot-metrics">
       <article class="metric panel"><span>Statut</span><strong id="snapshotStatus">—</strong></article>
       <article class="metric panel"><span>As-of demandé</span><strong id="requestedDate">—</strong></article>
       <article class="metric panel"><span>Market date</span><strong id="marketDate">—</strong></article>
@@ -57,7 +57,7 @@
           <div><p class="eyebrow">INGESTION</p><h3>Settlement file</h3></div>
           <span class="tag">CSV</span>
         </div>
-        <p class="muted">Importe les settlements sur la date sélectionnée et conserve les valeurs brutes, normalisées et leur règle de conversion.</p>
+        <p class="muted">Importe les closes sur la date sélectionnée et conserve valeurs brutes, normalisées, unités et provenance.</p>
         <input id="settlementFile" type="file" accept=".csv,text/csv">
         <label class="check"><input id="replaceQuotes" type="checkbox"> Autoriser le remplacement explicite</label>
         <button id="uploadButton">Importer le CSV</button>
@@ -73,9 +73,9 @@
       </article>
     </section>
 
-    <section class="panel pricing-panel">
+    <section class="panel pricing-panel compact-panel">
       <div class="section-head">
-        <div><p class="eyebrow">FIRST PRICING SLICE</p><h3>Zero-coupon diagnostic</h3></div>
+        <div><p class="eyebrow">DIAGNOSTIC</p><h3>Zero-coupon</h3></div>
         <span class="tag">ACT/365F</span>
       </div>
       <div class="pricing-form">
@@ -91,7 +91,90 @@
       <div id="pricingResult" class="result muted">Aucun calcul.</div>
     </section>
 
-    <section class="panel">
+    <section class="panel xccy-workbench">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">G10 CROSS-CURRENCY</p>
+          <h3>XCCY swap, collateral discounting & XVA</h3>
+        </div>
+        <span class="tag">EOD · MONTE CARLO</span>
+      </div>
+
+      <div class="xccy-form">
+        <label>Base currency<select id="baseCurrency"></select></label>
+        <label>Quote currency<select id="quoteCurrency"></select></label>
+        <label>Reporting currency<select id="reportingCurrency"></select></label>
+        <label>Base notional<input id="xccyNotional" type="number" value="10000000" min="1" step="100000"></label>
+        <label>Maturity<input id="xccyMaturity" type="date"></label>
+        <label>Pay / receive
+          <select id="payBase"><option value="true">Pay base / receive quote</option><option value="false">Receive base / pay quote</option></select>
+        </label>
+        <label>Frequency
+          <select id="paymentFrequency"><option value="3">Quarterly</option><option value="6">Semi-annual</option><option value="12">Annual</option></select>
+        </label>
+        <label>Discounting
+          <select id="discountingMode"><option value="native">Native curves</option><option value="base_collateral">Base collateral</option><option value="quote_collateral" selected>Quote collateral</option></select>
+        </label>
+        <label>XCCY basis (bp)<input id="xccyBasis" type="number" value="25" step="1"></label>
+        <label>Base spread (bp)<input id="baseSpread" type="number" value="0" step="1"></label>
+        <label>Quote spread (bp)<input id="quoteSpread" type="number" value="10" step="1"></label>
+        <label>Paths<input id="simulationPaths" type="number" value="512" min="32" max="5000" step="32"></label>
+      </div>
+
+      <details class="advanced" open>
+        <summary>Exposure, collateral and XVA assumptions</summary>
+        <div class="xccy-form assumptions-form">
+          <label>FX volatility<input id="fxVolatility" type="number" value="0.10" min="0" max="2" step="0.01"></label>
+          <label>Base rate vol<input id="baseRateVol" type="number" value="0.01" min="0" max="0.25" step="0.001"></label>
+          <label>Quote rate vol<input id="quoteRateVol" type="number" value="0.01" min="0" max="0.25" step="0.001"></label>
+          <label>Counterparty spread (bp)<input id="counterpartySpread" type="number" value="100" min="0" step="5"></label>
+          <label>Own spread (bp)<input id="ownSpread" type="number" value="80" min="0" step="5"></label>
+          <label>Funding spread (bp)<input id="fundingSpread" type="number" value="50" min="0" step="5"></label>
+          <label>Collateral spread (bp)<input id="collateralSpread" type="number" value="0" step="1"></label>
+          <label>Threshold<input id="collateralThreshold" type="number" value="1000000" min="0" step="10000"></label>
+          <label>MTA<input id="minimumTransferAmount" type="number" value="100000" min="0" step="10000"></label>
+        </div>
+      </details>
+      <button id="priceXccyButton" class="primary wide-button">Price XCCY & simulate exposure</button>
+      <div id="xccyStatus" class="muted calculation-status">Aucun calcul XCCY.</div>
+    </section>
+
+    <section id="xccyResults" class="xccy-results hidden">
+      <div class="xva-metric-grid">
+        <article class="metric panel"><span>Clean PV</span><strong id="cleanPv">—</strong></article>
+        <article class="metric panel"><span>XVA-adjusted PV</span><strong id="adjustedPv">—</strong></article>
+        <article class="metric panel"><span>CVA</span><strong id="cvaMetric">—</strong></article>
+        <article class="metric panel"><span>DVA</span><strong id="dvaMetric">—</strong></article>
+        <article class="metric panel"><span>FVA</span><strong id="fvaMetric">—</strong></article>
+        <article class="metric panel"><span>COLVA</span><strong id="colvaMetric">—</strong></article>
+        <article class="metric panel"><span>FX × base disc.</span><strong id="baseCrossGamma">—</strong></article>
+        <article class="metric panel"><span>FX × quote disc.</span><strong id="quoteCrossGamma">—</strong></article>
+      </div>
+
+      <div class="analytics-grid">
+        <article class="panel chart-panel">
+          <div class="section-head"><div><p class="eyebrow">FORWARD VALUE</p><h3>MTM forward</h3></div><span id="mtmCurrency" class="tag">—</span></div>
+          <svg id="mtmChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="MTM forward chart"></svg>
+        </article>
+        <article class="panel chart-panel">
+          <div class="section-head"><div><p class="eyebrow">COUNTERPARTY EXPOSURE</p><h3>EPE · ENE · PFE</h3></div><span id="exposureCurrency" class="tag">—</span></div>
+          <svg id="exposureChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="Exposure profile chart"></svg>
+        </article>
+      </div>
+
+      <div class="two-column results-lower">
+        <article class="panel comparison-panel">
+          <div class="section-head"><div><p class="eyebrow">COLLATERAL CURRENCY SWITCH</p><h3>Discounting comparison</h3></div></div>
+          <div id="discountComparison" class="comparison-list"></div>
+        </article>
+        <article class="panel comparison-panel">
+          <div class="section-head"><div><p class="eyebrow">MODEL SCOPE</p><h3>Assumptions & controls</h3></div></div>
+          <ul id="xccyWarnings" class="warning-list"></ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel market-table-panel">
       <div class="section-head">
         <div><p class="eyebrow">CANONICAL MARKET</p><h3>Quotes du snapshot résolu</h3></div>
         <input id="filterInput" type="search" placeholder="Filtrer par ID, source, asset class…">
