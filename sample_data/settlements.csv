@@ -1,0 +1,7 @@
+valuation_date,source,source_symbol,canonical_id,asset_class,quote_type,raw_value,conversion,factor,shift,currency,unit,metadata_json
+2026-07-20,ECB,EURUSD,FX.EURUSD.SPOT,FX,SPOT,1.1426,identity,1,0,USD,USD_PER_EUR,"{""source_observation_date"":""2026-07-20""}"
+2026-07-20,CME,SR3U6,RATE.USD.SOFR.3M.SEP2026,RATES,RATE,95.25,futures_price_to_rate,1,0,USD,DECIMAL,"{""contract_month"":""2026-09""}"
+2026-07-20,ICE,CDX.NA.IG.46,CR.CDX.NA.IG.46.5Y,CREDIT,SPREAD,85,bps_to_decimal,1,0,USD,DECIMAL,"{""tenor"":""5Y""}"
+2026-07-20,CME,HGU6,COMMO.COPPER.CME.SEP2026,COMMODITY,PRICE,548.25,cents_to_unit,1,0,USD,USD_PER_LB,"{""contract_month"":""2026-09""}"
+2026-07-20,INDEX,SPX,EQ.SPX.SPOT,EQUITY,SPOT,6300.50,identity,1,0,USD,INDEX_POINTS,{}
+2026-07-20,UST,US10Y,FI.USD.TSY.10Y.YIELD,FIXED_INCOME,YIELD,4.38,percent_to_decimal,1,0,USD,DECIMAL,{}

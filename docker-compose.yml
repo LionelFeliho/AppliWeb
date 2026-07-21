@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-xva}
+      POSTGRES_USER: ${POSTGRES_USER:-xva}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xva}
+    volumes:
+      - xva_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-xva} -d ${POSTGRES_DB:-xva}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      XVA_DATABASE_URL: ${XVA_DATABASE_URL:-postgresql+psycopg://xva:xva@db:5432/xva}
+      XVA_ADMIN_API_KEY: ${XVA_ADMIN_API_KEY:-}
+      XVA_CORS_ORIGINS: ${XVA_CORS_ORIGINS:-http://localhost:3000}
+      XVA_LOG_LEVEL: ${XVA_LOG_LEVEL:-INFO}
+      XVA_ECB_BASE_URL: ${XVA_ECB_BASE_URL:-https://data-api.ecb.europa.eu/service}
+      XVA_ECB_TIMEOUT_SECONDS: ${XVA_ECB_TIMEOUT_SECONDS:-30}
+      XVA_ECB_LOOKBACK_DAYS: ${XVA_ECB_LOOKBACK_DAYS:-7}
+      XVA_ECB_MAX_STALENESS_DAYS: ${XVA_ECB_MAX_STALENESS_DAYS:-7}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  xva_pgdata:

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XVA EOD Control Room</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">MARKET DATA · PRICING · XVA</p>
+      <h1>EOD Control Room</h1>
+    </div>
+    <nav>
+      <a href="/docs" target="_blank" rel="noreferrer">Swagger ↗</a>
+      <span id="healthBadge" class="badge neutral">API…</span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">HISTORICAL SNAPSHOT</p>
+        <h2>Une as-of date, une provenance explicite, un calcul reproductible.</h2>
+        <p class="muted">Chaque journée EOD est conservée en base. Le mode exact interdit tout fallback ; le mode previous ready utilise le dernier snapshot antérieur sans jamais regarder dans le futur.</p>
+      </div>
+      <div class="controls">
+        <label>As-of date
+          <input id="valuationDate" type="date" list="snapshotDates">
+          <datalist id="snapshotDates"></datalist>
+        </label>
+        <label>Politique de snapshot
+          <select id="snapshotPolicy">
+            <option value="exact">Exact date</option>
+            <option value="previous_ready">Previous ready</option>
+          </select>
+        </label>
+        <label>Clé admin
+          <input id="apiKey" type="password" autocomplete="off" placeholder="optionnelle en local">
+        </label>
+        <button id="loadButton" class="primary">Charger l'as-of</button>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <article class="metric panel"><span>Statut</span><strong id="snapshotStatus">—</strong></article>
+      <article class="metric panel"><span>As-of demandé</span><strong id="requestedDate">—</strong></article>
+      <article class="metric panel"><span>Market date</span><strong id="marketDate">—</strong></article>
+      <article class="metric panel"><span>Quotes</span><strong id="quoteCount">0</strong></article>
+      <article class="metric panel"><span>Checksum</span><strong id="checksum">—</strong></article>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <div class="section-head">
+          <div><p class="eyebrow">INGESTION</p><h3>Settlement file</h3></div>
+          <span class="tag">CSV</span>
+        </div>
+        <p class="muted">Importe les settlements sur la date sélectionnée et conserve les valeurs brutes, normalisées et leur règle de conversion.</p>
+        <input id="settlementFile" type="file" accept=".csv,text/csv">
+        <label class="check"><input id="replaceQuotes" type="checkbox"> Autoriser le remplacement explicite</label>
+        <button id="uploadButton">Importer le CSV</button>
+      </article>
+
+      <article class="panel">
+        <div class="section-head">
+          <div><p class="eyebrow">OFFICIAL API</p><h3>ECB Data Portal</h3></div>
+          <span class="tag">SDMX</span>
+        </div>
+        <p class="muted">EURUSD, EURGBP, EURJPY, EURCHF et €STR, avec date d'observation et staleness.</p>
+        <button id="ecbButton">Récupérer les données ECB</button>
+      </article>
+    </section>
+
+    <section class="panel pricing-panel">
+      <div class="section-head">
+        <div><p class="eyebrow">FIRST PRICING SLICE</p><h3>Zero-coupon diagnostic</h3></div>
+        <span class="tag">ACT/365F</span>
+      </div>
+      <div class="pricing-form">
+        <label>Notional<input id="notional" type="number" value="1000000" min="0" step="1000"></label>
+        <label>Maturité<input id="maturityDate" type="date"></label>
+        <label>Devise<input id="currency" value="EUR" maxlength="12"></label>
+        <label>Rate quote ID<input id="rateQuoteId" value="RATE.EUR.ESTR.ON"></label>
+        <label>Compounding
+          <select id="compounding"><option value="continuous">Continuous</option><option value="annual">Annual</option><option value="simple">Simple</option></select>
+        </label>
+        <button id="priceButton">Pricer</button>
+      </div>
+      <div id="pricingResult" class="result muted">Aucun calcul.</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="eyebrow">CANONICAL MARKET</p><h3>Quotes du snapshot résolu</h3></div>
+        <input id="filterInput" type="search" placeholder="Filtrer par ID, source, asset class…">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Canonical ID</th><th>Asset</th><th>Type</th><th>Normalisé</th><th>Brut</th><th>Conversion</th><th>Source</th><th>Observation</th></tr></thead>
+          <tbody id="quotesBody"><tr><td colspan="8" class="empty">Charge une as-of date.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

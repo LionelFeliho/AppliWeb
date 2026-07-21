@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "XVA: Start database",
+      "type": "shell",
+      "command": "docker compose up -d db",
+      "problemMatcher": []
+    },
+    {
+      "label": "XVA: Start full Docker stack",
+      "type": "shell",
+      "command": "docker compose up --build",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "XVA: Stop Docker stack",
+      "type": "shell",
+      "command": "docker compose down",
+      "problemMatcher": []
+    },
+    {
+      "label": "XVA: Backend tests",
+      "type": "shell",
+      "command": "python -m pytest -q",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "XVA: Import sample EOD",
+      "type": "shell",
+      "command": "python ../../scripts/run_eod.py --date ${input:asOfDate} --skip-ecb --settlement-file ../../sample_data/settlements.csv",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api",
+        "env": {
+          "XVA_DATABASE_URL": "postgresql+psycopg://xva:xva@localhost:5432/xva"
+        }
+      },
+      "dependsOn": "XVA: Start database",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "asOfDate",
+      "type": "promptString",
+      "description": "EOD/as-of date (YYYY-MM-DD)",
+      "default": "2026-07-20"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+name: XVA EOD Market Data Ingestion
+
+on:
+  schedule:
+    - cron: "15 18 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      valuation_date:
+        description: "ISO valuation date; blank uses the current UTC date"
+        required: false
+        type: string
+      replace:
+        description: "Explicitly replace changed existing quotes"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  ingest-ecb:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE_URL: ${{ secrets.XVA_API_BASE_URL }}
+      API_KEY: ${{ secrets.XVA_ADMIN_API_KEY }}
+      INPUT_DATE: ${{ inputs.valuation_date }}
+      INPUT_REPLACE: ${{ inputs.replace }}
+    steps:
+      - name: Trigger deployed ECB EOD ingestion
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${API_BASE_URL}" || -z "${API_KEY}" ]]; then
+            echo "XVA_API_BASE_URL and XVA_ADMIN_API_KEY are not configured; no remote ingestion was attempted." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          valuation_date="${INPUT_DATE:-}"
+          if [[ -z "$valuation_date" ]]; then
+            valuation_date="$(date -u +%F)"
+          fi
+          replace="${INPUT_REPLACE:-false}"
+          curl --fail-with-body --show-error --silent \
+            -X POST \
+            -H "X-API-Key: ${API_KEY}" \
+            "${API_BASE_URL%/}/api/v1/market-data/ingestions/ecb?valuation_date=${valuation_date}&replace=${replace}" \
+            | tee /tmp/xva-eod-result.json
+          echo "ECB EOD ingestion completed for ${valuation_date}." >> "$GITHUB_STEP_SUMMARY"

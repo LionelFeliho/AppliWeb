@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "XVA API (FastAPI)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "cwd": "${workspaceFolder}/apps/api",
+      "env": {
+        "XVA_DATABASE_URL": "postgresql+psycopg://xva:xva@localhost:5432/xva",
+        "XVA_CORS_ORIGINS": "http://localhost:3000",
+        "XVA_LOG_LEVEL": "INFO"
+      },
+      "preLaunchTask": "XVA: Start database",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
