@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from . import __version__
 from .config import Settings
+from .credit_routes import router as credit_cross_section_router
 from .db import Database
 from .market_data.domain import (
     MarketDataConflictError,
@@ -53,7 +54,7 @@ def create_app(
         version=__version__,
         description=(
             "Auditable end-of-day market-data snapshots, G10 cross-currency pricing, "
-            "exposure profiles and first-principles XVA diagnostics."
+            "exposure profiles, Nomura-style proxy credit curves and XVA diagnostics."
         ),
         lifespan=lifespan,
     )
@@ -89,6 +90,7 @@ def create_app(
         return {"status": "ok", "version": __version__, "mode": "EOD"}
 
     app.include_router(market_data_router)
+    app.include_router(credit_cross_section_router)
     app.include_router(pricing_router)
     app.include_router(xccy_pricing_router)
     app.include_router(reference_router)
