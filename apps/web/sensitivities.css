@@ -1,0 +1,35 @@
+.product-tabs { display: flex; gap: 8px; padding: 8px; margin-bottom: 14px; overflow-x: auto; }
+.product-tab-button { flex: 0 0 auto; min-height: 40px; padding: 9px 16px; border-color: transparent; background: transparent; color: var(--muted); }
+.product-tab-button:hover { color: var(--text); background: rgba(100, 217, 180, .06); transform: none; }
+.product-tab-button.active { color: #0c180f; background: var(--accent); border-color: transparent; }
+.product-tab-panel { min-width: 0; }
+.sensitivity-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 16px 18px; margin-bottom: 14px; }
+.sensitivity-toolbar p { margin: 3px 0 0; }
+.sensitivity-toolbar button { flex: 0 0 auto; }
+.sensitivity-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.sensitivity-metric-grid .metric:nth-child(5) strong,
+.sensitivity-metric-grid .metric:nth-child(7) strong,
+.sensitivity-metric-grid .metric:nth-child(8) strong { color: var(--danger); }
+.sensitivity-metric-grid .metric:nth-child(6) strong { color: var(--accent-2); }
+.sensitivity-chart-panel { margin-bottom: 14px; }
+.sensitivity-meta { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: .78rem; }
+.sensitivity-table-panel { padding: 24px; }
+.sensitivity-table-wrap { max-height: 520px; }
+.term-structure-table { min-width: 1180px; }
+.term-structure-table code { display: inline-block; margin: 2px 0; }
+.curve-lineage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.curve-lineage-grid h4 { margin: 0 0 10px; color: var(--accent-2); font-size: .8rem; letter-spacing: .04em; }
+.lineage-list { display: grid; gap: 8px; }
+.lineage-row { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(4, 12, 10, .32); }
+.lineage-row small { display: block; margin-top: 3px; color: var(--muted); font-size: .7rem; }
+.lineage-values { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 1180px) {
+  .sensitivity-metric-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 980px) {
+  .curve-lineage-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .sensitivity-metric-grid { grid-template-columns: 1fr; }
+  .sensitivity-toolbar { align-items: stretch; flex-direction: column; }
+}
