@@ -9,6 +9,10 @@ from app.quant.conventions import (
     year_fraction,
 )
 from app.quant.curves import CurveNode, ZeroCurve
+from app.quant.sensitivities import (
+    calculate_clean_pv_sensitivities,
+    calculate_xva_spread_sensitivities,
+)
 from app.quant.xccy import (
     SimulationAssumptions,
     XvaAssumptions,
@@ -67,6 +71,9 @@ def test_zero_curve_discount_and_forward() -> None:
     assert eur.forward_rate(1.0, 2.0, 1.0) > 0
     bumped = eur.parallel_bump(0.0001)
     assert bumped.discount(2.0) < eur.discount(2.0)
+    bucket_bumped = eur.node_bump(2, 0.0001)
+    assert bucket_bumped.nodes[2].zero_rate == pytest.approx(eur.nodes[2].zero_rate + 0.0001)
+    assert bucket_bumped.nodes[1].zero_rate == eur.nodes[1].zero_rate
 
 
 def test_discounting_modes_match_without_basis() -> None:
@@ -135,3 +142,70 @@ def test_exposure_and_xva_are_reproducible() -> None:
     assert metrics["cva"] >= 0
     assert metrics["dva"] >= 0
     assert metrics["xva_adjusted_pv"] == pytest.approx(clean_pv + metrics["total_xva"])
+
+
+def test_clean_pv_and_xva_sensitivity_term_structures() -> None:
+    eur = curve("EUR", [0.02, 0.021, 0.022, 0.025])
+    usd = curve("USD", [0.04, 0.041, 0.042, 0.043])
+    current_trade = trade()
+    clean = calculate_clean_pv_sensitivities(
+        trade=current_trade,
+        base_curve=eur,
+        quote_curve=usd,
+        spot=1.1,
+        basis=0.001,
+        mode="quote_collateral",
+        reporting_currency="USD",
+        rate_bump_bps=1.0,
+        fx_bump_relative=0.01,
+        basis_bump_bps=1.0,
+        spread_bump_bps=1.0,
+    )
+    assert [point["tenor"] for point in clean["base_curve"]] == ["3M", "1Y", "2Y", "5Y"]
+    assert len(clean["quote_curve"]) == 4
+    assert clean["summary"]["fx_delta_1pct"] != 0
+    assert clean["summary"]["cross_currency_basis_pv01"] != 0
+    assert clean["summary"]["base_curve_parallel_pv01"] == pytest.approx(
+        sum(point["pv01"] for point in clean["base_curve"]),
+        rel=5e-3,
+        abs=5e-2,
+    )
+
+    assumptions = SimulationAssumptions(
+        paths=32,
+        seed=11,
+        fx_volatility=0.10,
+        base_rate_volatility=0.005,
+        quote_rate_volatility=0.005,
+        fx_base_rate_correlation=-0.2,
+        fx_quote_rate_correlation=0.2,
+        base_quote_rate_correlation=0.5,
+        pfe_quantile=0.95,
+        collateral_threshold=100_000,
+        minimum_transfer_amount=10_000,
+    )
+    profile = simulate_exposure_profile(
+        current_trade, eur, usd, 1.1, 0.001, "quote_collateral", "USD", assumptions
+    )
+    clean_pv = price_trade(
+        current_trade, eur, usd, 1.1, 0.001, "quote_collateral", "USD"
+    )
+    xva_sensitivities = calculate_xva_spread_sensitivities(
+        clean_pv=clean_pv,
+        profile=profile,
+        reporting_curve=usd,
+        assumptions=XvaAssumptions(
+            counterparty_spread=0.01,
+            own_spread=0.008,
+            counterparty_recovery=0.4,
+            own_recovery=0.4,
+            funding_spread=0.005,
+            collateral_spread=0.0005,
+        ),
+        spread_bump_bps=1.0,
+    )
+    assert xva_sensitivities["counterparty_cva01"] >= 0
+    assert xva_sensitivities["counterparty_total_xva01"] <= 0
+    assert xva_sensitivities["own_dva01"] >= 0
+    assert xva_sensitivities["own_total_xva01"] >= 0
+    assert xva_sensitivities["funding_total_xva01"] <= 0
