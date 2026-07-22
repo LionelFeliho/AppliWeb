@@ -238,6 +238,21 @@ class XccySwapResponse(BaseModel):
     quote_curve: CurveResponse
     exposure_profile: list[ExposurePointResponse]
     xva: XvaMetricsResponse
+    assumptions: dict[str, Any]
+    warnings: list[str]
+
+
+class XccySensitivityAnalysisResponse(BaseModel):
+    as_of_date: date
+    market_data_date: date
+    snapshot_policy: SnapshotPolicy
+    exact_snapshot: bool
+    snapshot_checksum: str
+    base_currency: str
+    quote_currency: str
+    reporting_currency: str
+    selected_discounting_mode: DiscountingModeName
+    clean_pv: float
     sensitivities: XccySensitivitiesResponse
     assumptions: dict[str, Any]
     warnings: list[str]
