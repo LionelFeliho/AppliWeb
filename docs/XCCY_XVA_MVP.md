@@ -112,6 +112,7 @@ MVA and KVA are not yet included.
 
 ```http
 POST /api/v1/pricing/xccy-swap
+POST /api/v1/pricing/xccy-swap/sensitivities
 GET  /api/v1/reference/g10
 ```
 
@@ -141,9 +142,56 @@ Minimal request using default canonical OIS nodes:
     "own_spread_bps": 80,
     "funding_spread_bps": 50,
     "collateral_spread_bps": 0
+  },
+  "sensitivities": {
+    "rate_bump_bps": 1,
+    "fx_bump_relative": 0.01,
+    "basis_bump_bps": 1,
+    "spread_bump_bps": 1
   }
 }
 ```
+
+## Product analytics tabs and sensitivity term structure
+
+After a successful XCCY calculation the dashboard exposes four reusable product tabs:
+
+1. **Overview** — clean PV, XVA-adjusted PV, valuation adjustments, crossed gamma and discounting comparison;
+2. **Exposure** — forward MTM, EPE, ENE and PFE term structures;
+3. **Sensitivities** — curve-node PV01, FX delta/gamma, XCCY-basis PV01 and XVA spread 01s;
+4. **Market & controls** — curve quote lineage, zero rates, discount factors and modelling warnings.
+
+The Sensitivities tab lazy-loads the dedicated endpoint. This avoids recalculating a full bucketed risk report for users who only need the headline PV or exposure profile.
+
+The clean-PV sensitivity engine uses central bump-and-reprice. For a curve bucket with a configurable bump `b` expressed in basis points:
+
+```text
+PV01_bucket = [PV(rate + b) - PV(rate - b)] / (2 × b)
+Gamma_bucket_per_bp² = [PV(rate + b) - 2 PV + PV(rate - b)] / b²
+```
+
+The response contains one bucket for every base- and quote-curve node, including tenor, time, canonical market quote ID and zero rate. It also returns:
+
+- base-curve and quote-curve parallel PV01;
+- sum of bucket PV01s as a reconciliation control;
+- FX delta for a normalized 1% spot move and FX gamma per 1% squared;
+- cross-currency-basis PV01;
+- base- and quote-leg spread PV01.
+
+Sensitivity bumps can be controlled in the request:
+
+```json
+{
+  "sensitivities": {
+    "rate_bump_bps": 1.0,
+    "fx_bump_relative": 0.01,
+    "basis_bump_bps": 1.0,
+    "spread_bump_bps": 1.0
+  }
+}
+```
+
+The XVA section additionally returns counterparty CVA01, own DVA01, funding FVA01 and collateral COLVA01. These XVA spread sensitivities re-use the simulated EPE/ENE profile and therefore hold exposure fixed; they are not full market-risk re-simulations.
 
 ## Validation backlog
 
