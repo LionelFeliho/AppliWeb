@@ -58,6 +58,13 @@ class XvaAssumptionsRequest(BaseModel):
     collateral_spread_bps: float = Field(default=0.0, ge=-1000.0, le=1000.0)
 
 
+class XccySensitivityRequest(BaseModel):
+    rate_bump_bps: float = Field(default=1.0, gt=0.0, le=100.0)
+    fx_bump_relative: float = Field(default=0.01, gt=0.0, le=0.50)
+    basis_bump_bps: float = Field(default=1.0, gt=0.0, le=100.0)
+    spread_bump_bps: float = Field(default=1.0, gt=0.0, le=100.0)
+
+
 class XccySwapRequest(BaseModel):
     as_of_date: date
     maturity_date: date
@@ -95,6 +102,7 @@ class XccySwapRequest(BaseModel):
     compare_discounting: bool = True
     simulation: XccySimulationRequest = Field(default_factory=XccySimulationRequest)
     xva: XvaAssumptionsRequest = Field(default_factory=XvaAssumptionsRequest)
+    sensitivities: XccySensitivityRequest = Field(default_factory=XccySensitivityRequest)
 
     @model_validator(mode="after")
     def validate_trade(self) -> "XccySwapRequest":
@@ -154,6 +162,59 @@ class CrossGammaResponse(BaseModel):
     fx_quote_discount_cross_gamma: float
 
 
+class RateBucketSensitivityResponse(BaseModel):
+    curve_role: Literal["base", "quote"]
+    currency: str
+    tenor: str
+    time: float
+    quote_id: str
+    zero_rate: float
+    bump_bps: float
+    up_pnl: float
+    down_pnl: float
+    pv01: float
+    gamma_per_bp2: float
+
+
+class XccySensitivitySummaryResponse(BaseModel):
+    base_curve_parallel_pv01: float
+    quote_curve_parallel_pv01: float
+    base_curve_bucket_sum_pv01: float
+    quote_curve_bucket_sum_pv01: float
+    total_curve_parallel_pv01: float
+    fx_delta_1pct: float
+    fx_gamma_1pct2: float
+    fx_delta_per_spot_unit: float
+    fx_gamma_per_spot_unit2: float
+    cross_currency_basis_pv01: float
+    base_spread_pv01: float
+    quote_spread_pv01: float
+
+
+class XvaSpreadSensitivityResponse(BaseModel):
+    spread_bump_bps: float
+    counterparty_cva01: float
+    counterparty_total_xva01: float
+    own_dva01: float
+    own_total_xva01: float
+    funding_fva01: float
+    funding_total_xva01: float
+    collateral_colva01: float
+    collateral_total_xva01: float
+
+
+class XccySensitivitiesResponse(BaseModel):
+    methodology: str
+    reporting_currency: str
+    rate_bump_bps: float
+    fx_bump_relative: float
+    basis_bump_bps: float
+    base_curve: list[RateBucketSensitivityResponse]
+    quote_curve: list[RateBucketSensitivityResponse]
+    summary: XccySensitivitySummaryResponse
+    xva: XvaSpreadSensitivityResponse
+
+
 class XccySwapResponse(BaseModel):
     as_of_date: date
     market_data_date: date
@@ -177,5 +238,6 @@ class XccySwapResponse(BaseModel):
     quote_curve: CurveResponse
     exposure_profile: list[ExposurePointResponse]
     xva: XvaMetricsResponse
+    sensitivities: XccySensitivitiesResponse
     assumptions: dict[str, Any]
     warnings: list[str]
