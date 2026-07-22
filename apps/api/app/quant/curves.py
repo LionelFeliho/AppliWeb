@@ -83,6 +83,22 @@ class ZeroCurve:
             ],
         )
 
+    def node_bump(self, node_index: int, bump_decimal: float) -> "ZeroCurve":
+        if node_index < 0 or node_index >= len(self.nodes):
+            raise IndexError(f"Curve node index out of range: {node_index}")
+        return ZeroCurve(
+            self.currency,
+            [
+                CurveNode(
+                    tenor=node.tenor,
+                    time=node.time,
+                    zero_rate=node.zero_rate + (bump_decimal if index == node_index else 0.0),
+                    quote_id=node.quote_id,
+                )
+                for index, node in enumerate(self.nodes)
+            ],
+        )
+
     def as_dict(self) -> dict[str, object]:
         return {
             "currency": self.currency,

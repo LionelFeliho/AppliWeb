@@ -178,3 +178,33 @@ def test_full_demo_snapshot_is_g10_complete_and_prices_usd_cross(tmp_path: Path)
             "FX.USDJPY.SPOT",
         }
         assert result["quote_currency"] == "JPY"
+
+
+def test_sensitivity_endpoint_returns_term_structure_and_xva_01s(tmp_path: Path) -> None:
+    with make_client(tmp_path) as client:
+        assert ingest(client, market_csv()).status_code == 200
+        payload = request_payload()
+        payload["sensitivities"] = {
+            "rate_bump_bps": 2.0,
+            "fx_bump_relative": 0.005,
+            "basis_bump_bps": 2.0,
+            "spread_bump_bps": 2.0,
+        }
+        response = client.post("/api/v1/pricing/xccy-swap/sensitivities", json=payload)
+        assert response.status_code == 200, response.text
+        analysis = response.json()
+        assert analysis["clean_pv"] != 0
+        result = analysis["sensitivities"]
+        assert result["methodology"] == "central_bump_and_reprice_clean_pv"
+        assert len(result["base_curve"]) == len(TENORS)
+        assert len(result["quote_curve"]) == len(TENORS)
+        assert [point["tenor"] for point in result["base_curve"]] == TENORS
+        assert result["summary"]["fx_delta_1pct"] != 0
+        assert result["summary"]["cross_currency_basis_pv01"] != 0
+        assert result["xva"]["counterparty_cva01"] >= 0
+        assert result["xva"]["counterparty_total_xva01"] <= 0
+        assert result["rate_bump_bps"] == 2.0
+        assert result["fx_bump_relative"] == 0.005
+        assert result["basis_bump_bps"] == 2.0
+        assert result["xva"]["spread_bump_bps"] == 2.0
+        assert all(point["bump_bps"] == 2.0 for point in result["base_curve"])

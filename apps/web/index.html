@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>XVA EOD Control Room</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="sensitivities.css">
 </head>
 <body>
   <header class="topbar">
@@ -133,6 +134,10 @@
           <label>Collateral spread (bp)<input id="collateralSpread" type="number" value="0" step="1"></label>
           <label>Threshold<input id="collateralThreshold" type="number" value="1000000" min="0" step="10000"></label>
           <label>MTA<input id="minimumTransferAmount" type="number" value="100000" min="0" step="10000"></label>
+          <label>Rate sensitivity bump (bp)<input id="rateSensitivityBump" type="number" value="1" min="0.01" max="100" step="0.25"></label>
+          <label>FX sensitivity bump (%)<input id="fxSensitivityBumpPct" type="number" value="1" min="0.01" max="50" step="0.25"></label>
+          <label>Basis sensitivity bump (bp)<input id="basisSensitivityBump" type="number" value="1" min="0.01" max="100" step="0.25"></label>
+          <label>XVA spread bump (bp)<input id="xvaSensitivityBump" type="number" value="1" min="0.01" max="100" step="0.25"></label>
         </div>
       </details>
       <button id="priceXccyButton" class="primary wide-button">Price XCCY & simulate exposure</button>
@@ -140,37 +145,94 @@
     </section>
 
     <section id="xccyResults" class="xccy-results hidden">
-      <div class="xva-metric-grid">
-        <article class="metric panel"><span>Clean PV</span><strong id="cleanPv">—</strong></article>
-        <article class="metric panel"><span>XVA-adjusted PV</span><strong id="adjustedPv">—</strong></article>
-        <article class="metric panel"><span>CVA</span><strong id="cvaMetric">—</strong></article>
-        <article class="metric panel"><span>DVA</span><strong id="dvaMetric">—</strong></article>
-        <article class="metric panel"><span>FVA</span><strong id="fvaMetric">—</strong></article>
-        <article class="metric panel"><span>COLVA</span><strong id="colvaMetric">—</strong></article>
-        <article class="metric panel"><span>FX × base disc.</span><strong id="baseCrossGamma">—</strong></article>
-        <article class="metric panel"><span>FX × quote disc.</span><strong id="quoteCrossGamma">—</strong></article>
-      </div>
+      <nav class="product-tabs panel" role="tablist" aria-label="XCCY trade analytics">
+        <button type="button" class="product-tab-button active" data-product-tab="overview" role="tab" aria-selected="true" aria-controls="xccyTabOverview">Overview</button>
+        <button type="button" class="product-tab-button" data-product-tab="exposure" role="tab" aria-selected="false" aria-controls="xccyTabExposure">Exposure</button>
+        <button type="button" class="product-tab-button" data-product-tab="sensitivities" role="tab" aria-selected="false" aria-controls="xccyTabSensitivities">Sensitivities</button>
+        <button type="button" class="product-tab-button" data-product-tab="controls" role="tab" aria-selected="false" aria-controls="xccyTabControls">Market & controls</button>
+      </nav>
 
-      <div class="analytics-grid">
-        <article class="panel chart-panel">
-          <div class="section-head"><div><p class="eyebrow">FORWARD VALUE</p><h3>MTM forward</h3></div><span id="mtmCurrency" class="tag">—</span></div>
-          <svg id="mtmChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="MTM forward chart"></svg>
-        </article>
-        <article class="panel chart-panel">
-          <div class="section-head"><div><p class="eyebrow">COUNTERPARTY EXPOSURE</p><h3>EPE · ENE · PFE</h3></div><span id="exposureCurrency" class="tag">—</span></div>
-          <svg id="exposureChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="Exposure profile chart"></svg>
-        </article>
-      </div>
+      <div id="xccyTabOverview" class="product-tab-panel" data-product-panel="overview" role="tabpanel">
+        <div class="xva-metric-grid">
+          <article class="metric panel"><span>Clean PV</span><strong id="cleanPv">—</strong></article>
+          <article class="metric panel"><span>XVA-adjusted PV</span><strong id="adjustedPv">—</strong></article>
+          <article class="metric panel"><span>CVA</span><strong id="cvaMetric">—</strong></article>
+          <article class="metric panel"><span>DVA</span><strong id="dvaMetric">—</strong></article>
+          <article class="metric panel"><span>FVA</span><strong id="fvaMetric">—</strong></article>
+          <article class="metric panel"><span>COLVA</span><strong id="colvaMetric">—</strong></article>
+          <article class="metric panel"><span>FX × base disc.</span><strong id="baseCrossGamma">—</strong></article>
+          <article class="metric panel"><span>FX × quote disc.</span><strong id="quoteCrossGamma">—</strong></article>
+        </div>
 
-      <div class="two-column results-lower">
         <article class="panel comparison-panel">
           <div class="section-head"><div><p class="eyebrow">COLLATERAL CURRENCY SWITCH</p><h3>Discounting comparison</h3></div></div>
           <div id="discountComparison" class="comparison-list"></div>
         </article>
-        <article class="panel comparison-panel">
-          <div class="section-head"><div><p class="eyebrow">MODEL SCOPE</p><h3>Assumptions & controls</h3></div></div>
-          <ul id="xccyWarnings" class="warning-list"></ul>
+      </div>
+
+      <div id="xccyTabExposure" class="product-tab-panel hidden" data-product-panel="exposure" role="tabpanel">
+        <div class="analytics-grid">
+          <article class="panel chart-panel">
+            <div class="section-head"><div><p class="eyebrow">FORWARD VALUE</p><h3>MTM forward</h3></div><span id="mtmCurrency" class="tag">—</span></div>
+            <svg id="mtmChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="MTM forward chart"></svg>
+          </article>
+          <article class="panel chart-panel">
+            <div class="section-head"><div><p class="eyebrow">COUNTERPARTY EXPOSURE</p><h3>EPE · ENE · PFE</h3></div><span id="exposureCurrency" class="tag">—</span></div>
+            <svg id="exposureChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="Exposure profile chart"></svg>
+          </article>
+        </div>
+      </div>
+
+      <div id="xccyTabSensitivities" class="product-tab-panel hidden" data-product-panel="sensitivities" role="tabpanel">
+        <div class="sensitivity-toolbar panel">
+          <div><p class="eyebrow">ON-DEMAND ANALYTICS</p><p id="sensitivityLoadStatus" class="muted">Open this tab after pricing to calculate the term structure.</p></div>
+          <button id="refreshSensitivitiesButton" type="button">Recalculate sensitivities</button>
+        </div>
+        <div class="sensitivity-metric-grid">
+          <article class="metric panel"><span id="basePv01Label">Base curve PV01</span><strong id="basePv01Metric">—</strong></article>
+          <article class="metric panel"><span id="quotePv01Label">Quote curve PV01</span><strong id="quotePv01Metric">—</strong></article>
+          <article class="metric panel"><span>FX delta / 1%</span><strong id="fxDeltaMetric">—</strong></article>
+          <article class="metric panel"><span>Basis PV01</span><strong id="basisPv01Metric">—</strong></article>
+          <article class="metric panel"><span>Counterparty CVA01</span><strong id="counterpartyCva01Metric">—</strong></article>
+          <article class="metric panel"><span>Own DVA01</span><strong id="ownDva01Metric">—</strong></article>
+          <article class="metric panel"><span>Funding FVA01</span><strong id="fundingFva01Metric">—</strong></article>
+          <article class="metric panel"><span>Collateral COLVA01</span><strong id="collateralColva01Metric">—</strong></article>
+        </div>
+
+        <article class="panel chart-panel sensitivity-chart-panel">
+          <div class="section-head">
+            <div><p class="eyebrow">BUCKETED CURVE RISK</p><h3>PV01 term structure</h3></div>
+            <span id="sensitivityCurrency" class="tag">—</span>
+          </div>
+          <svg id="sensitivityChart" class="chart" viewBox="0 0 900 320" role="img" aria-label="Bucketed PV01 term structure"></svg>
+          <p id="sensitivityMeta" class="muted sensitivity-meta"></p>
         </article>
+
+        <article class="panel sensitivity-table-panel">
+          <div class="section-head"><div><p class="eyebrow">TENOR DETAIL</p><h3>Curve-node sensitivities</h3></div></div>
+          <div class="table-wrap sensitivity-table-wrap">
+            <table class="term-structure-table">
+              <thead><tr><th>Tenor</th><th id="baseSensitivityHeader">Base PV01</th><th id="quoteSensitivityHeader">Quote PV01</th><th>Total PV01</th><th>Base gamma / bp²</th><th>Quote gamma / bp²</th><th>Market quote lineage</th></tr></thead>
+              <tbody id="sensitivityTableBody"><tr><td colspan="7" class="empty">Price a product to populate sensitivities.</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <div id="xccyTabControls" class="product-tab-panel hidden" data-product-panel="controls" role="tabpanel">
+        <div class="two-column results-lower">
+          <article class="panel comparison-panel">
+            <div class="section-head"><div><p class="eyebrow">MARKET LINEAGE</p><h3>Curves used by the trade</h3></div></div>
+            <div class="curve-lineage-grid">
+              <div><h4 id="baseCurveLineageTitle">Base curve</h4><div id="baseCurveLineage" class="lineage-list"></div></div>
+              <div><h4 id="quoteCurveLineageTitle">Quote curve</h4><div id="quoteCurveLineage" class="lineage-list"></div></div>
+            </div>
+          </article>
+          <article class="panel comparison-panel">
+            <div class="section-head"><div><p class="eyebrow">MODEL SCOPE</p><h3>Assumptions & controls</h3></div></div>
+            <ul id="xccyWarnings" class="warning-list"></ul>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -191,5 +253,6 @@
   </main>
 
   <script src="app.js"></script>
+  <script src="sensitivities.js"></script>
 </body>
 </html>
